@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>売上・広告費 一元管理</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6feb'/%3E%3Crect x='7' y='17' width='4' height='8' fill='white'/%3E%3Crect x='14' y='11' width='4' height='14' fill='white'/%3E%3Crect x='21' y='7' width='4' height='18' fill='white'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="app">
+  <h1>売上・広告費 一元管理</h1>
+  <span class="sub">Amazon / 楽天 / Yahoo / 公式サイト / 卸</span>
+  <nav class="tabs">
+    <button data-tab="dashboard" class="active">ダッシュボード</button>
+    <button data-tab="import">データ取り込み</button>
+    <button data-tab="manual">手入力</button>
+    <button data-tab="history">取り込み履歴</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ ダッシュボード ============ -->
+<section class="view" id="view-dashboard">
+  <div class="panel">
+    <div class="filters">
+      <div class="field">
+        <label for="date-from">開始日</label>
+        <input type="date" id="date-from">
+      </div>
+      <div class="field">
+        <label for="date-to">終了日</label>
+        <input type="date" id="date-to">
+      </div>
+      <div class="field">
+        <label>期間の指定</label>
+        <div class="quick">
+          <button class="ghost" data-range="this-month">今月</button>
+          <button class="ghost" data-range="last-month">先月</button>
+          <button class="ghost" data-range="30d">直近30日</button>
+          <button class="ghost" data-range="this-year">今年</button>
+          <button class="ghost" data-range="all">全期間</button>
+        </div>
+      </div>
+      <div class="field" style="flex:1; min-width:240px">
+        <label>チャネル（クリックで絞り込み）</label>
+        <div class="chips" id="channel-chips"></div>
+      </div>
+      <button class="ghost" id="btn-export-channel">チャネル別CSV</button>
+      <button class="ghost" id="btn-export-trend">推移CSV</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="chart-head">
+      <h2 style="margin:0">推移</h2>
+      <select id="granularity" style="margin-left:10px">
+        <option value="month">月次</option>
+        <option value="day">日次</option>
+      </select>
+      <div class="legend">
+        <span><i class="swatch" style="background:#1f6feb"></i>純売上</span>
+        <span><i class="swatch" style="background:#f0a202"></i>広告費</span>
+        <span><i class="swatch" style="background:#17875b"></i>粗利</span>
+        <span><i class="swatch" style="background:#c0392b"></i>広告費率</span>
+      </div>
+    </div>
+    <div id="chart-host"><p class="empty">データがありません。</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>チャネル別</h2>
+    <div class="table-wrap"><table id="channel-table"></table></div>
+    <p class="hint-text">
+      純売上 = 売上 − 返金 ／ 粗利 = 純売上 − 手数料 − 送料 − 原価 − 広告費 ／
+      ACoS = 広告費 ÷ 広告経由売上 ／ 広告費率 = 広告費 ÷ 純売上
+    </p>
+  </div>
+</section>
+
+<!-- ============ 取り込み ============ -->
+<section class="view" id="view-import" hidden>
+  <div class="panel steps">
+    <div class="step">
+      <h3>取り込む種類とチャネルを選ぶ</h3>
+      <div class="row-gap">
+        <div class="field">
+          <label for="imp-kind">データの種類</label>
+          <select id="imp-kind">
+            <option value="sales">売上データ</option>
+            <option value="ads">広告費データ</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="imp-channel">チャネル</label>
+          <select id="imp-channel"></select>
+        </div>
+        <div class="field">
+          <label for="imp-new-channel">チャネルを追加</label>
+          <div class="row-gap">
+            <input type="text" id="imp-new-channel" placeholder="例: Qoo10" size="12">
+            <button class="ghost" id="btn-add-channel">追加</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="imp-preset">保存済みの列設定</label>
+          <select id="imp-preset"><option value="">（使わない）</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>CSV / TSV ファイルを選ぶ</h3>
+      <div class="drop" id="drop">
+        ここにファイルをドラッグ＆ドロップ、またはクリックして選択<br>
+        <span style="font-size:12px">各モールの管理画面からダウンロードした CSV をそのまま使えます（Shift_JIS 可）</span>
+      </div>
+      <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+      <div class="row-gap" style="margin-top:8px">
+        <label class="inline">見出しの行番号
+          <input type="number" id="imp-header-row" value="1" min="1" max="50" style="width:64px">
+        </label>
+        <span class="hint-text">1 行目が列名でない CSV（楽天 RMS など）はここを変更してください。</span>
+      </div>
+      <div id="file-info"></div>
+    </div>
+
+    <div class="step" id="step-map" hidden>
+      <h3>列を対応付ける</h3>
+      <div class="map-grid" id="map-grid"></div>
+      <div class="row-gap" style="margin-top:12px">
+        <label class="inline">
+          <input type="checkbox" id="imp-aggregate" checked>同じ日付の行を合計する（注文明細の取り込み向け）
+        </label>
+        <label class="inline">
+          <input type="checkbox" id="imp-replace">同じチャネル・同じ期間の既存データを置き換える（再取り込み時）
+        </label>
+      </div>
+      <div class="row-gap" style="margin-top:10px">
+        <input type="text" id="imp-preset-name" placeholder="この列設定に名前を付けて保存（任意）" size="34">
+        <button class="primary" id="btn-commit">取り込む</button>
+      </div>
+      <div id="import-msg"></div>
+      <h3 style="font-size:12px;color:var(--muted);margin:16px 0 6px">ファイルの先頭 8 行</h3>
+      <div class="table-wrap"><table class="preview-table" id="preview-table"></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 手入力 ============ -->
+<section class="view" id="view-manual" hidden>
+  <div class="panel">
+    <h2>手入力（卸・実店舗・CSVが無いチャネル向け）</h2>
+    <div class="row-gap" style="margin-bottom:12px">
+      <div class="field">
+        <label for="man-kind">データの種類</label>
+        <select id="man-kind">
+          <option value="sales">売上データ</option>
+          <option value="ads">広告費データ</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="man-channel">チャネル</label>
+        <select id="man-channel"></select>
+      </div>
+      <div class="field">
+        <label for="man-date">日付</label>
+        <input type="date" id="man-date">
+      </div>
+    </div>
+    <div class="form-grid" id="manual-fields"></div>
+    <div class="row-gap" style="margin-top:14px">
+      <button class="primary" id="btn-manual-save">登録する</button>
+      <span class="hint-text">月まとめで入れる場合は、その月の 1 日を日付にしてください。</span>
+    </div>
+    <div id="manual-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 履歴 ============ -->
+<section class="view" id="view-history" hidden>
+  <div class="panel">
+    <h2>取り込み履歴</h2>
+    <p class="hint-text" style="margin-bottom:10px">
+      間違えて取り込んだ場合は「取り消す」でその回の行だけをまとめて削除できます。
+    </p>
+    <div class="table-wrap"><table id="batch-table"></table></div>
+  </div>
+  <div class="panel">
+    <h2>保存済みの列設定</h2>
+    <div class="table-wrap"><table id="preset-table"></table></div>
+  </div>
+</section>
+
+</main>
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>
