@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>売上・広告費 一元管理</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f6feb'/%3E%3Crect x='7' y='17' width='4' height='8' fill='white'/%3E%3Crect x='14' y='11' width='4' height='14' fill='white'/%3E%3Crect x='21' y='7' width='4' height='18' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f4f6f9;--panel:#fff;--ink:#1b2733;--muted:#6b7a8c;--line:#dfe5ec;--accent:#1f6feb;
+--accent-soft:#e8f0fe;--good:#17875b;--bad:#c0392b;--radius:10px;
+--shadow:0 1px 2px rgba(16,32,48,.06),0 4px 14px rgba(16,32,48,.05)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;
+font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,-apple-system,sans-serif}
+header.app{background:#fff;border-bottom:1px solid var(--line);padding:14px 22px;
+display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header.app h1{font-size:17px;margin:0;letter-spacing:.02em}
+header.app .sub{color:var(--muted);font-size:12px}
+nav.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav.tabs button{background:none;border:1px solid transparent;border-radius:8px;padding:6px 14px;
+font:inherit;color:var(--muted);cursor:pointer}
+nav.tabs button:hover{background:var(--bg)}
+nav.tabs button.active{background:var(--accent-soft);color:var(--accent);font-weight:700}
+main{padding:20px 22px 60px;max-width:1240px;margin:0 auto}
+.view[hidden]{display:none}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+box-shadow:var(--shadow);padding:16px 18px;margin-bottom:18px}
+.panel>h2{font-size:13px;margin:0 0 12px;color:var(--muted);letter-spacing:.08em;font-weight:700}
+.filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:4px}
+.field>label{font-size:11px;color:var(--muted);font-weight:700}
+input,select,button,textarea{font:inherit;color:inherit;border:1px solid var(--line);
+border-radius:7px;padding:6px 9px;background:#fff}
+input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:700;padding:7px 18px}
+button.primary:hover{filter:brightness(1.08)}
+button.primary:disabled{opacity:.5;cursor:not-allowed;filter:none}
+button.ghost{background:#fff}
+button.ghost:hover{background:var(--bg)}
+button.danger{color:var(--bad);border-color:#f0c8c2;background:#fff}
+.quick{display:flex;gap:6px;flex-wrap:wrap}
+.quick button{padding:6px 11px;font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:999px;padding:4px 13px;background:#fff;
+font-size:12.5px;user-select:none}
+.chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+padding:13px 15px;box-shadow:var(--shadow)}
+.kpi .label{font-size:11.5px;color:var(--muted);font-weight:700}
+.kpi .value{font-size:23px;font-weight:700;letter-spacing:-.02em;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:11.5px;color:var(--muted)}
+.kpi .value.good{color:var(--good)}
+.kpi .value.bad{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:11.5px;color:var(--muted);font-weight:700;background:#fbfcfe}
+th:first-child,td:first-child{text-align:left}
+tbody tr:hover{background:#fafbfd}
+tr.total td{font-weight:700;background:#f7f9fc;border-top:2px solid var(--line)}
+td.neg{color:var(--bad)}
+.table-wrap{overflow-x:auto}
+.chart-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.chart-head .legend{display:flex;gap:14px;margin-left:auto;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend .swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
+svg.chart{width:100%;height:280px;display:block}
+.steps{counter-reset:step}
+.step{border-top:1px solid var(--line);padding:14px 0}
+.step:first-child{border-top:none;padding-top:0}
+.step>h3{font-size:13px;margin:0 0 10px}
+.step>h3::before{counter-increment:step;content:counter(step);display:inline-grid;place-items:center;
+width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;
+margin-right:8px;vertical-align:1px}
+.drop{border:2px dashed var(--line);border-radius:var(--radius);padding:26px;text-align:center;
+color:var(--muted);background:#fbfcfe;cursor:pointer}
+.drop.hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.map-row{display:flex;flex-direction:column;gap:3px}
+.map-row label{font-size:11.5px;color:var(--muted);font-weight:700}
+.map-row .rate{display:flex;gap:5px;align-items:center;font-size:11.5px;color:var(--muted)}
+.map-row .rate input{width:62px}
+.preview-table{font-size:12px}
+.preview-table td{max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.msg{padding:9px 13px;border-radius:8px;margin:10px 0;font-size:13px}
+.msg.ok{background:#e6f5ee;color:var(--good)}
+.msg.err{background:#fdecea;color:var(--bad)}
+.msg.info{background:var(--accent-soft);color:var(--accent)}
+.msg ul{margin:6px 0 0;padding-left:20px}
+.empty{color:var(--muted);text-align:center;padding:34px 10px}
+.row-gap{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hint-text{color:var(--muted);font-size:12px;margin:4px 0 0}
+label.inline{display:inline-flex;gap:6px;align-items:center;font-size:12.5px}
+#warn{background:#fff6e5;color:#8a5a00;border-bottom:1px solid #f0dcb4;padding:9px 22px;font-size:13px}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+background:var(--ink);color:#fff;padding:10px 20px;border-radius:8px;opacity:0;
+transition:opacity .2s,transform .2s;pointer-events:none;z-index:50}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="warn" hidden></div>
+
+<header class="app">
+  <h1>売上・広告費 一元管理</h1>
+  <span class="sub">Amazon / 楽天 / Yahoo / 公式サイト / 卸</span>
+  <nav class="tabs">
+    <button data-tab="dashboard" class="active">ダッシュボード</button>
+    <button data-tab="import">データ取り込み</button>
+    <button data-tab="manual">手入力</button>
+    <button data-tab="history">履歴</button>
+    <button data-tab="backup">保存・バックアップ</button>
+  </nav>
+</header>
+
+<main>
+
+<section class="view" id="view-dashboard">
+  <div class="panel">
+    <div class="filters">
+      <div class="field"><label for="date-from">開始日</label><input type="date" id="date-from"></div>
+      <div class="field"><label for="date-to">終了日</label><input type="date" id="date-to"></div>
+      <div class="field"><label>期間の指定</label>
+        <div class="quick">
+          <button class="ghost" data-range="this-month">今月</button>
+          <button class="ghost" data-range="last-month">先月</button>
+          <button class="ghost" data-range="30d">直近30日</button>
+          <button class="ghost" data-range="this-year">今年</button>
+          <button class="ghost" data-range="all">全期間</button>
+        </div>
+      </div>
+      <div class="field" style="flex:1;min-width:240px">
+        <label>チャネル（クリックで絞り込み）</label>
+        <div class="chips" id="channel-chips"></div>
+      </div>
+      <button class="ghost" id="btn-export-channel">チャネル別CSV</button>
+      <button class="ghost" id="btn-export-trend">推移CSV</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="chart-head">
+      <h2 style="margin:0">推移</h2>
+      <select id="granularity">
+        <option value="month">月次</option>
+        <option value="day">日次</option>
+      </select>
+      <div class="legend">
+        <span><i class="swatch" style="background:#1f6feb"></i>純売上</span>
+        <span><i class="swatch" style="background:#f0a202"></i>広告費</span>
+        <span><i class="swatch" style="background:#17875b"></i>粗利</span>
+        <span><i class="swatch" style="background:#c0392b"></i>広告費率</span>
+      </div>
+    </div>
+    <div id="chart-host"><p class="empty">データがありません。</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>チャネル別</h2>
+    <div class="table-wrap"><table id="channel-table"></table></div>
+    <p class="hint-text">
+      純売上 = 売上 − 返金 ／ 粗利 = 純売上 − 手数料 − 送料 − 原価 − 広告費 ／
+      ACoS = 広告費 ÷ 広告経由売上 ／ 広告費率 = 広告費 ÷ 純売上
+    </p>
+  </div>
+</section>
+
+<section class="view" id="view-import" hidden>
+  <div class="panel steps">
+    <div class="step">
+      <h3>取り込む種類とチャネルを選ぶ</h3>
+      <div class="row-gap">
+        <div class="field"><label for="imp-kind">データの種類</label>
+          <select id="imp-kind">
+            <option value="sales">売上データ</option>
+            <option value="ads">広告費データ</option>
+          </select>
+        </div>
+        <div class="field"><label for="imp-channel">チャネル</label><select id="imp-channel"></select></div>
+        <div class="field"><label for="imp-new-channel">チャネルを追加</label>
+          <div class="row-gap">
+            <input type="text" id="imp-new-channel" placeholder="例: Qoo10" size="12">
+            <button class="ghost" id="btn-add-channel">追加</button>
+          </div>
+        </div>
+        <div class="field"><label for="imp-preset">保存済みの列設定</label>
+          <select id="imp-preset"><option value="">（使わない）</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>CSV / TSV ファイルを選ぶ</h3>
+      <div class="drop" id="drop">
+        ここにファイルをドラッグ＆ドロップ、またはクリックして選択<br>
+        <span style="font-size:12px">各モールの管理画面からダウンロードした CSV をそのまま使えます（Shift_JIS 可）</span>
+      </div>
+      <input type="file" id="file-input" accept=".csv,.tsv,.txt" hidden>
+      <div class="row-gap" style="margin-top:8px">
+        <label class="inline">見出しの行番号
+          <input type="number" id="imp-header-row" value="1" min="1" max="50" style="width:64px">
+        </label>
+        <span class="hint-text">1 行目が列名でない CSV（楽天 RMS など）はここを変更してください。</span>
+      </div>
+      <div id="file-info"></div>
+    </div>
+
+    <div class="step" id="step-map" hidden>
+      <h3>列を対応付ける</h3>
+      <div class="map-grid" id="map-grid"></div>
+      <div class="row-gap" style="margin-top:12px">
+        <label class="inline"><input type="checkbox" id="imp-aggregate" checked>同じ日付の行を合計する（注文明細の取り込み向け）</label>
+        <label class="inline"><input type="checkbox" id="imp-replace">同じチャネル・同じ期間の既存データを置き換える（再取り込み時）</label>
+      </div>
+      <div class="row-gap" style="margin-top:10px">
+        <input type="text" id="imp-preset-name" placeholder="この列設定に名前を付けて保存（任意）" size="34">
+        <button class="primary" id="btn-commit">取り込む</button>
+      </div>
+      <div id="import-msg"></div>
+      <h3 style="font-size:12px;color:var(--muted);margin:16px 0 6px">ファイルの先頭 8 行</h3>
+      <div class="table-wrap"><table class="preview-table" id="preview-table"></table></div>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="view-manual" hidden>
+  <div class="panel">
+    <h2>手入力（卸・実店舗・CSVが無いチャネル向け）</h2>
+    <div class="row-gap" style="margin-bottom:12px">
+      <div class="field"><label for="man-kind">データの種類</label>
+        <select id="man-kind">
+          <option value="sales">売上データ</option>
+          <option value="ads">広告費データ</option>
+        </select>
+      </div>
+      <div class="field"><label for="man-channel">チャネル</label><select id="man-channel"></select></div>
+      <div class="field"><label for="man-date">日付</label><input type="date" id="man-date"></div>
+    </div>
+    <div class="form-grid" id="manual-fields"></div>
+    <div class="row-gap" style="margin-top:14px">
+      <button class="primary" id="btn-manual-save">登録する</button>
+      <span class="hint-text">月まとめで入れる場合は、その月の 1 日を日付にしてください。</span>
+    </div>
+    <div id="manual-msg"></div>
+  </div>
+</section>
+
+<section class="view" id="view-history" hidden>
+  <div class="panel">
+    <h2>取り込み履歴</h2>
+    <p class="hint-text" style="margin-bottom:10px">間違えて取り込んだ場合は「取り消す」でその回の行だけをまとめて削除できます。</p>
+    <div class="table-wrap"><table id="batch-table"></table></div>
+  </div>
+  <div class="panel">
+    <h2>保存済みの列設定</h2>
+    <div class="table-wrap"><table id="preset-table"></table></div>
+  </div>
+</section>
+
+<section class="view" id="view-backup" hidden>
+  <div class="panel">
+    <h2>データの保存とバックアップ</h2>
+    <p class="hint-text" style="margin:0 0 12px">
+      入力したデータはこのブラウザの中に自動保存されます。ただし閲覧履歴の削除や別のPCへの引っ越しでは消えるため、
+      月に一度はバックアップファイルを保存しておくことをおすすめします。
+    </p>
+    <div class="row-gap">
+      <button class="primary" id="btn-backup-save">バックアップを保存（ダウンロード）</button>
+      <button class="ghost" id="btn-backup-load">バックアップから復元</button>
+      <input type="file" id="backup-input" accept=".json" hidden>
+      <button class="danger" id="btn-reset">すべてのデータを削除</button>
+    </div>
+    <div id="backup-msg"></div>
+    <div id="storage-status" class="hint-text" style="margin-top:14px"></div>
+  </div>
+  <div class="panel">
+    <h2>このツールについて</h2>
+    <p class="hint-text" style="margin:0">
+      インストール不要で、このHTMLファイル1個だけで動きます。インターネットにも接続しません
+      （通信は一切行いません）。データはお使いのPCのブラウザ内にのみ保存され、外部には送信されません。<br>
+      別のPCに移すときは、このHTMLファイルとバックアップファイルの2つをコピーしてください。
+    </p>
+  </div>
+</section>
+
+</main>
+<div id="toast"></div>
+<script>
+"use strict";
+
+/* ============ 定数 ============ */
+
+const FIELD_LABELS = {
+  date:"日付", orders:"注文数", gross:"売上", fees:"手数料", shipping:"送料",
+  cogs:"原価", refunds:"返金", campaign:"キャンペーン名", cost:"広告費",
+  ad_sales:"広告経由売上", clicks:"クリック数", impressions:"表示回数",
+};
+const FIELDS = {
+  sales: ["date","orders","gross","fees","shipping","cogs","refunds"],
+  ads:   ["date","campaign","cost","ad_sales","clicks","impressions"],
+};
+const REQUIRED = { sales:["date","gross"], ads:["date","cost"] };
+const RATE_FIELDS = ["fees","cogs","shipping"];
+const SALES_NUMERIC = ["gross","fees","shipping","cogs","refunds"];
+const ADS_NUMERIC = ["cost","ad_sales"];
+const DEFAULT_CHANNELS = ["Amazon","楽天","Yahoo","公式サイト","卸"];
+const STORAGE_KEY = "sales-manager-v1";
+
+/* ============ 保存（ブラウザ内） ============ */
+
+const store = { sales:[], ads:[], channels:[...DEFAULT_CHANNELS], presets:[], batches:[], seq:1 };
+let storageOK = true;
+
+function load() {
+  let raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY); }
+  catch (e) { storageOK = false; return; }
+  if (!raw) return;
+  try { adopt(JSON.parse(raw)); }
+  catch (e) { console.error("保存データを読めませんでした", e); }
+}
+
+function adopt(data) {
+  if (!data || typeof data !== "object") throw new Error("形式が違います");
+  store.sales = Array.isArray(data.sales) ? data.sales : [];
+  store.ads = Array.isArray(data.ads) ? data.ads : [];
+  store.presets = Array.isArray(data.presets) ? data.presets : [];
+  store.batches = Array.isArray(data.batches) ? data.batches : [];
+  store.seq = Number(data.seq) || 1;
+  const named = Array.isArray(data.channels) && data.channels.length
+    ? data.channels.slice() : DEFAULT_CHANNELS.slice();
+  // 実データにあるチャネルも取りこぼさない
+  const seen = new Set(named);
+  for (const row of store.sales.concat(store.ads)) {
+    if (row.channel && !seen.has(row.channel)) { seen.add(row.channel); named.push(row.channel); }
+  }
+  store.channels = named;
+}
+
+function save() {
+  if (!storageOK) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  } catch (e) {
+    storageOK = false;
+    showWarning("ブラウザへの自動保存ができませんでした（保存容量の上限か、ブラウザの設定によるものです）。"
+      + "「保存・バックアップ」タブからバックアップファイルを保存してください。");
+  }
+}
+
+function nextId() { return store.seq++; }
+
+function showWarning(text) {
+  const box = document.getElementById("warn");
+  box.textContent = "⚠ " + text;
+  box.hidden = false;
+}
+
+/* ============ 文字コード判定と CSV 解析 ============ */
+
+const BOM = "﻿";
+
+function decodeBytes(buffer) {
+  const head = new Uint8Array(buffer, 0, Math.min(2, buffer.byteLength));
+  if (head[0] === 0xff && head[1] === 0xfe) return { text:new TextDecoder("utf-16le").decode(buffer), encoding:"UTF-16" };
+  if (head[0] === 0xfe && head[1] === 0xff) return { text:new TextDecoder("utf-16be").decode(buffer), encoding:"UTF-16" };
+  try {
+    // UTF-8 として厳密に読めなければ、日本語の CSV はまず Shift_JIS。
+    const text = new TextDecoder("utf-8", { fatal:true }).decode(buffer);
+    return { text: text.startsWith(BOM) ? text.slice(1) : text, encoding:"UTF-8" };
+  } catch (e) { /* Shift_JIS とみなす */ }
+  return { text:new TextDecoder("shift_jis").decode(buffer), encoding:"Shift_JIS" };
+}
+
+function sniffDelimiter(text) {
+  const line = text.split(/\r?\n/).find((l) => l.trim()) || "";
+  const counts = [[",", (line.match(/,/g) || []).length],
+                  ["\t", (line.match(/\t/g) || []).length],
+                  [";", (line.match(/;/g) || []).length]];
+  counts.sort((a, b) => b[1] - a[1]);
+  return counts[0][1] > 0 ? counts[0][0] : ",";
+}
+
+function parseCSV(text, delimiter) {
+  const rows = [];
+  let row = [], field = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else { quoted = false; }
+      } else field += ch;
+      continue;
+    }
+    if (ch === '"') quoted = true;
+    else if (ch === delimiter) { row.push(field); field = ""; }
+    else if (ch === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+    else if (ch !== "\r") field += ch;
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+
+function dedupeHeaders(headers) {
+  const seen = {}, out = [];
+  headers.forEach((h, i) => {
+    let name = String(h || "").trim();
+    if (name.startsWith(BOM)) name = name.slice(1);
+    if (!name) name = "列" + (i + 1);
+    if (name in seen) { seen[name] += 1; name = name + " (" + seen[name] + ")"; }
+    else seen[name] = 0;
+    out.push(name);
+  });
+  return out;
+}
+
+function readTable(buffer, headerRow) {
+  const decoded = decodeBytes(buffer);
+  const delimiter = sniffDelimiter(decoded.text);
+  const raw = parseCSV(decoded.text, delimiter);
+  if (!raw.length) return { encoding:decoded.encoding, delimiter, headers:[], rows:[] };
+  const index = headerRow < raw.length ? headerRow : 0;
+  const headers = dedupeHeaders(raw[index]);
+  const rows = raw.slice(index + 1).map((cells) => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = cells[i] !== undefined ? cells[i] : ""; });
+    return obj;
+  });
+  return { encoding:decoded.encoding, delimiter, headers, rows };
+}
+
+/* ============ 数値・日付の解釈 ============ */
+
+function parseNumber(value) {
+  if (value === null || value === undefined) return 0;
+  if (typeof value === "number") return value;
+  let s = String(value).normalize("NFKC").trim();
+  if (!s || ["-","--","―","ー","N/A","n/a"].indexOf(s) >= 0) return 0;
+  const negative = s.charAt(0) === "(" && s.charAt(s.length - 1) === ")";
+  s = s.replace(/^\(|\)$/g, "").replace(/[¥￥$,\s円個点回%]/g, "");
+  if (!s || s === "-" || s === "+" || s === ".") return 0;
+  let n = Number(s);
+  if (!isFinite(n)) {
+    const m = s.match(/-?\d+(?:\.\d+)?/);
+    if (!m) return 0;
+    n = Number(m[0]);
+  }
+  return negative ? -n : n;
+}
+
+function parseInteger(value) { return Math.round(parseNumber(value)); }
+
+function pad(n) { return String(n).length < 2 ? "0" + n : String(n); }
+
+function isoOf(y, mo, d) {
+  if (!(mo >= 1 && mo <= 12) || !(d >= 1 && d <= 31)) return null;
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+  return y + "-" + pad(mo) + "-" + pad(d);
+}
+
+function parseDate(value) {
+  if (value === null || value === undefined) return null;
+  let s = String(value).normalize("NFKC").trim();
+  if (!s) return null;
+  s = s.split(/[T ]/)[0].trim();          // ISO 8601 の時刻部分を落とす
+  let m = s.match(/^(\d{4})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+  if (m) return isoOf(+m[1], +m[2], +m[3]);
+  m = s.match(/^(\d{4})[-/.年](\d{1,2})月?$/);   // 「2026年5月」→ その月の 1 日
+  if (m) return isoOf(+m[1], +m[2], 1);
+  m = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (m) return isoOf(+m[1], +m[2], +m[3]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return isoOf(+m[3], +m[1], +m[2]);
+  return null;
+}
+
+/* ============ 列の自動推測 ============ */
+
+const HINTS = {
+  date: ["日付","注文日","受注日","売上日","purchase-date","date","注文日時","受注日時",
+         "レポート期間","集計期間","対象期間","期間","納品日","出荷日","計上日","取引日","年月"],
+  orders: ["注文数","受注件数","件数","注文件数","orders","数量"],
+  gross: ["売上","売上高","商品代金","小計","合計金額","item-price","商品合計","総売上",
+          "sales","売上金額","請求金額","販売金額","取引金額","税込金額"],
+  fees: ["手数料","販売手数料","システム利用料","fee","commission","決済手数料","利用料"],
+  shipping: ["送料","配送料","shipping","発送料","運賃"],
+  cogs: ["原価","仕入","仕入額","原価合計","仕入金額","cost"],
+  refunds: ["返金","返品","キャンセル","refund"],
+  campaign: ["キャンペーン","キャンペーン名","campaign","広告グループ"],
+  cost: ["広告費","費用","消化金額","コスト","spend","cost","clickCost"],
+  ad_sales: ["広告経由売上","広告売上","売上","attributedSales","コンバージョン売上"],
+  clicks: ["クリック","クリック数","clicks"],
+  impressions: ["表示回数","インプレッション","impressions"],
+};
+
+function guessMapping(headers, kind) {
+  const lowered = headers.map((h) => [h, h.normalize("NFKC").toLowerCase()]);
+  const mapping = {}, used = new Set();
+  for (const field of FIELDS[kind]) {
+    for (const hint of HINTS[field]) {
+      const needle = hint.normalize("NFKC").toLowerCase();
+      const hit = lowered.find((pair) =>
+        !used.has(pair[0]) && (pair[1] === needle || pair[1].indexOf(needle) >= 0));
+      if (hit) { mapping[field] = hit[0]; used.add(hit[0]); break; }
+    }
+  }
+  return mapping;
+}
+
+/* ============ 行の組み立て ============ */
+
+function resolveField(spec, row, computed) {
+  if (spec === null || spec === undefined || spec === "") return 0;
+  if (typeof spec === "object") {
+    if ("const" in spec) return parseNumber(spec.const);
+    if ("rate_of" in spec) return (computed[spec.rate_of] || 0) * parseNumber(spec.percent) / 100;
+    return 0;
+  }
+  return parseNumber(row[spec]);
+}
+
+function buildRows(rows, mapping, kind, channel, aggregate) {
+  const built = [], errors = [];
+  const dateColumn = mapping.date;
+  if (!dateColumn) return { rows:[], errors:["日付の列が指定されていません。"] };
+
+  rows.forEach((row, i) => {
+    const date = parseDate(row[dateColumn]);
+    if (!date) {
+      if (errors.length < 20) {
+        errors.push((i + 1) + ' 行目: 日付を解釈できないため除外しました（"'
+          + String(row[dateColumn] || "").slice(0, 40) + '"）');
+      }
+      return;
+    }
+    let out;
+    if (kind === "sales") {
+      out = { channel:channel, date:date, note:"" };
+      // 率指定（手数料 10% など）が売上を参照できるよう gross から順に計算する
+      for (const field of SALES_NUMERIC) out[field] = resolveField(mapping[field], row, out);
+      out.orders = mapping.orders
+        ? parseInteger(resolveField(mapping.orders, row, out))
+        : 1;   // 注文明細をそのまま取り込む場合、1 行 = 1 注文とみなす
+    } else {
+      out = { channel:channel, date:date, note:"",
+        campaign: mapping.campaign ? String(row[mapping.campaign] || "").trim() : "" };
+      for (const field of ADS_NUMERIC) out[field] = resolveField(mapping[field], row, out);
+      for (const field of ["clicks","impressions"]) {
+        out[field] = parseInteger(resolveField(mapping[field], row, out));
+      }
+    }
+    built.push(out);
+  });
+
+  return { rows: aggregate ? aggregateRows(built, kind) : built, errors:errors };
+}
+
+function aggregateRows(rows, kind) {
+  const merged = new Map();
+  const fields = kind === "sales"
+    ? ["orders"].concat(SALES_NUMERIC)
+    : ADS_NUMERIC.concat(["clicks","impressions"]);
+  for (const row of rows) {
+    const key = kind === "sales" ? row.date : row.date + " " + row.campaign;
+    const target = merged.get(key);
+    if (!target) { merged.set(key, Object.assign({}, row)); continue; }
+    for (const f of fields) target[f] += row[f];
+  }
+  return Array.from(merged.values()).sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+/* ============ 集計 ============ */
+
+function derive(row) {
+  const net = row.gross - row.refunds;
+  const profit = net - row.fees - row.shipping - row.cogs - row.ad_cost;
+  row.net = net;
+  row.profit = profit;
+  row.margin = net ? (profit / net) * 100 : 0;
+  row.ad_ratio = net ? (row.ad_cost / net) * 100 : 0;
+  row.acos = row.ad_sales ? (row.ad_cost / row.ad_sales) * 100 : 0;
+  row.roas = row.ad_cost ? (row.ad_sales / row.ad_cost) * 100 : 0;
+  row.aov = row.orders ? net / row.orders : 0;
+  return row;
+}
+
+function blank(extra) {
+  return Object.assign({ orders:0, gross:0, fees:0, shipping:0, cogs:0, refunds:0,
+    ad_cost:0, ad_sales:0, clicks:0, impressions:0 }, extra);
+}
+
+function matches(row, channels, from, to) {
+  if (from && row.date < from) return false;
+  if (to && row.date > to) return false;
+  if (channels && channels.size && !channels.has(row.channel)) return false;
+  return true;
+}
+
+function summarize(channels, from, to) {
+  const byChannel = new Map();
+  const pick = (name) => {
+    if (!byChannel.has(name)) byChannel.set(name, blank({ channel:name }));
+    return byChannel.get(name);
+  };
+  for (const r of store.sales) {
+    if (!matches(r, channels, from, to)) continue;
+    const t = pick(r.channel);
+    t.orders += r.orders; t.gross += r.gross; t.fees += r.fees;
+    t.shipping += r.shipping; t.cogs += r.cogs; t.refunds += r.refunds;
+  }
+  for (const r of store.ads) {
+    if (!matches(r, channels, from, to)) continue;
+    const t = pick(r.channel);
+    t.ad_cost += r.cost; t.ad_sales += r.ad_sales;
+    t.clicks += r.clicks; t.impressions += r.impressions;
+  }
+  const list = Array.from(byChannel.values()).sort((a, b) => a.channel.localeCompare(b.channel, "ja"));
+  const total = blank({ channel:"合計" });
+  for (const row of list) {
+    for (const k of Object.keys(total)) if (k !== "channel") total[k] += row[k];
+  }
+  return { channels: list.map(derive), total: derive(total) };
+}
+
+function timeseries(channels, from, to, granularity) {
+  const buckets = new Map();
+  const keyOf = (date) => (granularity === "month" ? date.slice(0, 7) : date);
+  const pick = (key) => {
+    if (!buckets.has(key)) buckets.set(key, blank({ bucket:key }));
+    return buckets.get(key);
+  };
+  for (const r of store.sales) {
+    if (!matches(r, channels, from, to)) continue;
+    const t = pick(keyOf(r.date));
+    t.orders += r.orders; t.gross += r.gross; t.fees += r.fees;
+    t.shipping += r.shipping; t.cogs += r.cogs; t.refunds += r.refunds;
+  }
+  for (const r of store.ads) {
+    if (!matches(r, channels, from, to)) continue;
+    const t = pick(keyOf(r.date));
+    t.ad_cost += r.cost; t.ad_sales += r.ad_sales;
+    t.clicks += r.clicks; t.impressions += r.impressions;
+  }
+  return Array.from(buckets.values()).sort((a, b) => (a.bucket < b.bucket ? -1 : 1)).map(derive);
+}
+
+function dateBounds() {
+  let lo = null, hi = null;
+  for (const r of store.sales.concat(store.ads)) {
+    if (lo === null || r.date < lo) lo = r.date;
+    if (hi === null || r.date > hi) hi = r.date;
+  }
+  return { min:lo, max:hi };
+}
+
+/* ============ 画面のユーティリティ ============ */
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.prototype.slice.call(document.querySelectorAll(sel));
+
+function el(tag, attrs) {
+  const node = document.createElement(tag);
+  attrs = attrs || {};
+  for (const k of Object.keys(attrs)) {
+    const v = attrs[k];
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") node.className = v;
+    else if (k.slice(0, 2) === "on") node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v);
+  }
+  for (let i = 2; i < arguments.length; i++) {
+    const kids = Array.isArray(arguments[i]) ? arguments[i] : [arguments[i]];
+    for (const kid of kids) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      node.appendChild(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    }
+  }
+  return node;
+}
+
+const yen = (n) => "¥" + Math.round(n || 0).toLocaleString("ja-JP");
+const pct = (n) => (n || 0).toFixed(1) + "%";
+const num = (n) => Math.round(n || 0).toLocaleString("ja-JP");
+
+function shortYen(n) {
+  const a = Math.abs(n);
+  if (a >= 1e8) return (n / 1e8).toFixed(1) + "億";
+  if (a >= 1e4) return Math.round(n / 1e4).toLocaleString("ja-JP") + "万";
+  return Math.round(n).toLocaleString("ja-JP");
+}
+
+let toastTimer = null;
+function toast(message, isError) {
+  const box = $("#toast");
+  box.textContent = message;
+  box.style.background = isError ? "#c0392b" : "#1b2733";
+  box.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => box.classList.remove("show"), 3200);
+}
+
+function message(host, text, kind, list) {
+  const node = el("div", { class:"msg " + kind }, text);
+  if (list && list.length) {
+    node.appendChild(el("ul", {}, list.slice(0, 8).map((t) => el("li", {}, t))));
+  }
+  host.replaceChildren(node);
+}
+
+function isoDate(d) {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function download(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const link = el("a", { href:url, download:filename });
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ファイルに書き出す。
+   このページを file:// で直接開いた場合、ブラウザの制約で <a download> の
+   ファイル名が無視され「download」という名前で保存されてしまう。そこで
+   保存ダイアログ（showSaveFilePicker）が使えるときはそちらを優先し、
+   使えないときは名前を付け替えてもらうよう画面で案内する。 */
+async function saveFile(filename, content, mime) {
+  if (window.showSaveFilePicker) {
+    const extension = filename.slice(filename.lastIndexOf("."));
+    const accept = {};
+    accept[mime.split(";")[0]] = [extension];   // accept のキーに charset は付けられない
+    const startedAt = Date.now();
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: extension === ".json" ? "バックアップファイル" : "CSV ファイル", accept: accept }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(new Blob([content], { type:mime }));
+      await writable.close();
+      return { saved:true, named:true };
+    } catch (err) {
+      // ダイアログを出せない環境では AbortError が即座に返る。人が実際に
+      // キャンセルした場合は必ず時間がかかるので、経過時間で見分ける。
+      // 取り違えても保存されるだけで、消えることはない。
+      if (err && err.name === "AbortError" && Date.now() - startedAt > 400) {
+        return { saved:false, named:false };
+      }
+      // それ以外は以下の従来方式にする
+    }
+  }
+  download(filename, new Blob([content], { type:mime }));
+  return { saved:true, named:false };
+}
+
+function renameNotice(filename) {
+  return "ブラウザの制約でファイル名が「download」になります。"
+    + "保存先のフォルダで「" + filename + "」に名前を変更してください。";
+}
+
+/* ============ タブ ============ */
+
+$$("nav.tabs button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    $$("nav.tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+    $$(".view").forEach((v) => { v.hidden = v.id !== "view-" + btn.dataset.tab; });
+    if (btn.dataset.tab === "history") renderHistory();
+    if (btn.dataset.tab === "backup") renderStorageStatus();
+  });
+});
+
+/* ============ ダッシュボード ============ */
+
+const selected = new Set();
+let upload = null;
+
+function selectedChannels() {
+  // 全選択のときは絞り込まない（新しいチャネルも自動で入る）
+  if (selected.size === 0 || selected.size >= store.channels.length) return null;
+  return selected;
+}
+
+function refresh() {
+  const from = $("#date-from").value || null;
+  const to = $("#date-to").value || null;
+  const chans = selectedChannels();
+  const summary = summarize(chans, from, to);
+  renderKpis(summary.total);
+  renderChannelTable(summary);
+  renderChart(timeseries(chans, from, to, $("#granularity").value));
+}
+
+function renderChips() {
+  const host = $("#channel-chips");
+  const chips = store.channels.map((name) =>
+    el("button", {
+      class: "chip" + (selected.has(name) ? " on" : ""),
+      onclick: () => {
+        if (selected.has(name)) selected.delete(name); else selected.add(name);
+        renderChips(); refresh();
+      },
+    }, name));
+  chips.push(el("button", {
+    class:"chip", title:"すべて選択",
+    onclick: () => { store.channels.forEach((c) => selected.add(c)); renderChips(); refresh(); },
+  }, "すべて"));
+  host.replaceChildren.apply(host, chips);
+}
+
+function fillChannelSelects() {
+  ["#imp-channel", "#man-channel"].forEach((id) => {
+    const sel = $(id);
+    const keep = sel.value;
+    const options = store.channels.map((c) => el("option", { value:c }, c));
+    sel.replaceChildren.apply(sel, options);
+    if (store.channels.indexOf(keep) >= 0) sel.value = keep;
+  });
+}
+
+function fillPresetSelect() {
+  const sel = $("#imp-preset");
+  const options = [el("option", { value:"" }, "（使わない）")].concat(
+    store.presets.map((p) => el("option", { value:String(p.id) }, p.name + "（" + p.channel + "）")));
+  sel.replaceChildren.apply(sel, options);
+}
+
+function renderKpis(t) {
+  const cards = [
+    { label:"純売上", value:yen(t.net), hint:"売上 " + shortYen(t.gross) + " − 返金 " + shortYen(t.refunds) },
+    { label:"広告費", value:yen(t.ad_cost), hint:"広告費率 " + pct(t.ad_ratio) },
+    { label:"粗利", value:yen(t.profit), hint:"粗利率 " + pct(t.margin),
+      tone: t.profit > 0 ? "good" : t.profit < 0 ? "bad" : "" },
+    { label:"ACoS", value: t.ad_sales ? pct(t.acos) : "—",
+      hint: t.ad_sales ? "ROAS " + pct(t.roas) : "広告経由売上が未登録" },
+    { label:"注文数", value:num(t.orders), hint: t.orders ? "客単価 " + yen(t.aov) : "" },
+    { label:"経費計", value:yen(t.fees + t.shipping + t.cogs),
+      hint:"手数料 " + shortYen(t.fees) + " / 送料 " + shortYen(t.shipping) + " / 原価 " + shortYen(t.cogs) },
+  ];
+  const host = $("#kpis");
+  host.replaceChildren.apply(host, cards.map((c) =>
+    el("div", { class:"kpi" },
+      el("div", { class:"label" }, c.label),
+      el("div", { class:"value " + (c.tone || "") }, c.value),
+      el("div", { class:"hint" }, c.hint || ""))));
+}
+
+const COLUMNS = [
+  ["純売上","net",yen], ["広告費","ad_cost",yen], ["広告費率","ad_ratio",pct],
+  ["手数料","fees",yen], ["送料","shipping",yen], ["原価","cogs",yen],
+  ["粗利","profit",yen], ["粗利率","margin",pct],
+  ["ACoS","acos",(v) => (v ? pct(v) : "—")], ["ROAS","roas",(v) => (v ? pct(v) : "—")],
+  ["注文数","orders",num], ["客単価","aov",yen],
+];
+
+function renderRow(row, isTotal) {
+  return el("tr", { class: isTotal ? "total" : "" },
+    el("td", {}, row.channel),
+    COLUMNS.map((c) => el("td", { class: row[c[1]] < 0 ? "neg" : "" }, c[2](row[c[1]]))));
+}
+
+function renderChannelTable(summary) {
+  const table = $("#channel-table");
+  if (!summary.channels.length) {
+    table.replaceChildren(el("tbody", {}, el("tr", {},
+      el("td", { colspan:String(COLUMNS.length + 1), class:"empty" },
+        "データがありません。「データ取り込み」タブから CSV を読み込んでください。"))));
+    return;
+  }
+  const head = el("thead", {}, el("tr", {},
+    [el("th", {}, "チャネル")].concat(COLUMNS.map((c) => el("th", {}, c[0])))));
+  const body = el("tbody", {}, summary.channels.map((r) => renderRow(r, false)));
+  body.appendChild(renderRow(summary.total, true));
+  table.replaceChildren(head, body);
+}
+
+/* ---- 推移グラフ（SVG を直接組み立てる） ---- */
+
+function niceMax(value) {
+  if (value <= 0) return 1;
+  const exp = Math.pow(10, Math.floor(Math.log10(value)));
+  const scaled = value / exp;
+  const step = scaled <= 1 ? 1 : scaled <= 2 ? 2 : scaled <= 5 ? 5 : 10;
+  return step * exp;
+}
+
+function svgEl(tag, attrs) {
+  const node = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const k of Object.keys(attrs)) node.setAttribute(k, attrs[k]);
+  return node;
+}
+
+function svgText(attrs, content) {
+  const node = svgEl("text", attrs);
+  node.textContent = content;
+  return node;
+}
+
+function renderChart(points) {
+  const host = $("#chart-host");
+  if (!points.length) {
+    host.replaceChildren(el("p", { class:"empty" }, "この期間のデータがありません。"));
+    return;
+  }
+  const W = 1000, H = 280, L = 66, R = 54, T = 14, B = 38;
+  const plotW = W - L - R, plotH = H - T - B;
+  const series = [{ key:"net", color:"#1f6feb" }, { key:"ad_cost", color:"#f0a202" },
+                  { key:"profit", color:"#17875b" }];
+
+  const values = [];
+  points.forEach((p) => series.forEach((s) => values.push(p[s.key])));
+  const top = niceMax(Math.max.apply(null, [1].concat(values)));
+  const bottom = Math.min.apply(null, [0].concat(values));
+  const lo = bottom < 0 ? -niceMax(-bottom) : 0;
+  const yScale = (v) => T + plotH - ((v - lo) / (top - lo)) * plotH;
+
+  const rateTop = niceMax(Math.max.apply(null, [1].concat(points.map((p) => p.ad_ratio))));
+  const rScale = (v) => T + plotH - (v / rateTop) * plotH;
+
+  const svg = svgEl("svg", { class:"chart", viewBox:"0 0 " + W + " " + H,
+    preserveAspectRatio:"none", role:"img", "aria-label":"売上・広告費・粗利の推移" });
+
+  for (let i = 0; i <= 4; i++) {
+    const v = lo + ((top - lo) * i) / 4;
+    const y = yScale(v);
+    svg.appendChild(svgEl("line", { x1:L, x2:W - R, y1:y, y2:y,
+      stroke: v === 0 ? "#b9c4d0" : "#eef2f6", "stroke-width": v === 0 ? 1.2 : 1 }));
+    svg.appendChild(svgText({ x:L - 8, y:y + 4, "text-anchor":"end", "font-size":11,
+      fill:"#6b7a8c" }, shortYen(v)));
+    svg.appendChild(svgText({ x:W - R + 8, y:rScale((rateTop * i) / 4) + 4, "font-size":11,
+      fill:"#c0392b" }, ((rateTop * i) / 4).toFixed(0) + "%"));
+  }
+
+  const slot = plotW / points.length;
+  const barW = Math.max(2, Math.min(22, (slot * 0.72) / series.length));
+  const groupW = barW * series.length;
+  const every = Math.ceil(points.length / 16);
+
+  points.forEach((p, i) => {
+    const centre = L + slot * (i + 0.5);
+    series.forEach((s, j) => {
+      const y0 = yScale(0), y1 = yScale(p[s.key]);
+      svg.appendChild(svgEl("rect", {
+        x: centre - groupW / 2 + j * barW, y: Math.min(y0, y1),
+        width: Math.max(1, barW - 1), height: Math.max(1, Math.abs(y1 - y0)),
+        fill: s.color, rx:1.5 }));
+    });
+    // 目盛りが混み合うときは間引いて表示する
+    if (i % every === 0) {
+      svg.appendChild(svgText({ x:centre, y:H - 14, "text-anchor":"middle", "font-size":11,
+        fill:"#6b7a8c" }, p.bucket.length === 10 ? p.bucket.slice(5) : p.bucket));
+    }
+  });
+
+  const path = points.map((p, i) =>
+    (i ? "L" : "M") + (L + slot * (i + 0.5)) + "," + rScale(p.ad_ratio)).join(" ");
+  svg.appendChild(svgEl("path", { d:path, fill:"none", stroke:"#c0392b",
+    "stroke-width":2, "stroke-linejoin":"round" }));
+  points.forEach((p, i) => {
+    svg.appendChild(svgEl("circle", { cx:L + slot * (i + 0.5), cy:rScale(p.ad_ratio),
+      r:2.6, fill:"#c0392b" }));
+  });
+
+  host.replaceChildren(svg, renderTrendTable(points));
+}
+
+function renderTrendTable(points) {
+  const wrap = el("div", { class:"table-wrap", style:"margin-top:14px" });
+  wrap.appendChild(el("table", {},
+    el("thead", {}, el("tr", {},
+      ["期間","純売上","広告費","広告費率","粗利","粗利率","注文数"].map((h) => el("th", {}, h)))),
+    el("tbody", {}, points.map((p) => el("tr", {},
+      el("td", {}, p.bucket),
+      el("td", {}, yen(p.net)),
+      el("td", {}, yen(p.ad_cost)),
+      el("td", {}, pct(p.ad_ratio)),
+      el("td", { class: p.profit < 0 ? "neg" : "" }, yen(p.profit)),
+      el("td", { class: p.profit < 0 ? "neg" : "" }, pct(p.margin)),
+      el("td", {}, num(p.orders)))))));
+  return wrap;
+}
+
+/* ---- 期間フィルタ ---- */
+
+$$("[data-range]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const today = new Date();
+    let from, to = today;
+    switch (btn.dataset.range) {
+      case "this-month": from = new Date(today.getFullYear(), today.getMonth(), 1); break;
+      case "last-month":
+        from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        to = new Date(today.getFullYear(), today.getMonth(), 0); break;
+      case "30d": from = new Date(today.getTime() - 29 * 86400000); break;
+      case "this-year": from = new Date(today.getFullYear(), 0, 1); break;
+      default: {
+        const b = dateBounds();
+        $("#date-from").value = b.min || "";
+        $("#date-to").value = b.max || "";
+        refresh();
+        return;
+      }
+    }
+    $("#date-from").value = isoDate(from);
+    $("#date-to").value = isoDate(to);
+    refresh();
+  });
+});
+
+["#date-from", "#date-to", "#granularity"].forEach((id) =>
+  $(id).addEventListener("change", refresh));
+
+/* ---- CSV 書き出し ---- */
+
+async function exportCsv(what) {
+  const from = $("#date-from").value || null;
+  const to = $("#date-to").value || null;
+  const chans = selectedChannels();
+  const header = [what === "trend" ? "期間" : "チャネル", "売上","返金","純売上","手数料","送料",
+    "原価","広告費","広告経由売上","粗利","粗利率(%)","広告費率(%)","ACoS(%)","ROAS(%)","注文数"];
+  let rows, key;
+  if (what === "trend") {
+    rows = timeseries(chans, from, to, $("#granularity").value);
+    key = "bucket";
+  } else {
+    const s = summarize(chans, from, to);
+    rows = s.channels.concat([s.total]);
+    key = "channel";
+  }
+  const lines = [header].concat(rows.map((r) => [
+    r[key], Math.round(r.gross), Math.round(r.refunds), Math.round(r.net), Math.round(r.fees),
+    Math.round(r.shipping), Math.round(r.cogs), Math.round(r.ad_cost), Math.round(r.ad_sales),
+    Math.round(r.profit), r.margin.toFixed(1), r.ad_ratio.toFixed(1), r.acos.toFixed(1),
+    r.roas.toFixed(1), r.orders,
+  ]));
+  const csv = lines.map((cells) => cells.map((c) => {
+    const s = String(c);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }).join(",")).join("\r\n");
+  const filename = "売上広告費_" + (what === "trend" ? "推移" : "チャネル別") + "_"
+    + new Date().toISOString().slice(0, 10) + ".csv";
+  // Excel で開いたときに文字化けしないよう BOM 付き UTF-8 にする
+  const result = await saveFile(filename, BOM + csv, "text/csv;charset=utf-8");
+  if (!result.saved) return;
+  toast(result.named ? "CSV を保存しました" : "CSV を保存しました（" + renameNotice(filename) + "）");
+}
+
+$("#btn-export-channel").addEventListener("click", () => exportCsv("channel"));
+$("#btn-export-trend").addEventListener("click", () => exportCsv("trend"));
+
+/* ============ 取り込み ============ */
+
+$("#btn-add-channel").addEventListener("click", () => {
+  const name = $("#imp-new-channel").value.trim();
+  if (!name) return;
+  if (store.channels.indexOf(name) < 0) store.channels.push(name);
+  selected.add(name);
+  save();
+  $("#imp-new-channel").value = "";
+  renderChips(); fillChannelSelects();
+  $("#imp-channel").value = name;
+  toast("チャネル「" + name + "」を追加しました");
+});
+
+const drop = $("#drop");
+drop.addEventListener("click", () => $("#file-input").click());
+drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("hover"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("hover"));
+drop.addEventListener("drop", (e) => {
+  e.preventDefault();
+  drop.classList.remove("hover");
+  if (e.dataTransfer.files[0]) preview(e.dataTransfer.files[0]);
+});
+$("#file-input").addEventListener("change", (e) => {
+  if (e.target.files[0]) preview(e.target.files[0]);
+});
+$("#imp-kind").addEventListener("change", () => { if (upload) preview(upload.file); });
+$("#imp-header-row").addEventListener("change", () => { if (upload) preview(upload.file); });
+$("#imp-preset").addEventListener("change", () => {
+  const preset = store.presets.find((p) => String(p.id) === $("#imp-preset").value);
+  if (!preset) return;
+  $("#imp-kind").value = preset.kind;
+  if (store.channels.indexOf(preset.channel) >= 0) $("#imp-channel").value = preset.channel;
+  if (upload) { upload.guess = preset.mapping; renderMapping(); }
+});
+
+function readFileBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("ファイルを読み込めませんでした。"));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function preview(file) {
+  const kind = $("#imp-kind").value;
+  const headerRow = Math.max(1, Number($("#imp-header-row").value) || 1) - 1;
+  message($("#file-info"), "「" + file.name + "」を読み込んでいます…", "info");
+  try {
+    const buffer = await readFileBuffer(file);
+    const table = readTable(buffer, headerRow);
+    if (!table.headers.length) throw new Error("列が読み取れませんでした。CSV / TSV 形式か確認してください。");
+
+    upload = { file:file, headerRow:headerRow, headers:table.headers, rows:table.rows,
+      encoding:table.encoding, delimiter:table.delimiter,
+      guess: guessMapping(table.headers, kind) };
+    const preset = store.presets.find((p) => String(p.id) === $("#imp-preset").value);
+    if (preset && preset.kind === kind) upload.guess = preset.mapping;
+
+    message($("#file-info"),
+      "「" + file.name + "」を読み込みました： " + table.rows.length.toLocaleString() + " 行 ／ "
+      + "文字コード " + table.encoding + " ／ 区切り「"
+      + (table.delimiter === "\t" ? "タブ" : table.delimiter) + "」", "ok");
+    $("#step-map").hidden = false;
+    renderMapping();
+    renderPreviewTable();
+  } catch (err) {
+    message($("#file-info"), err.message, "err");
+    $("#step-map").hidden = true;
+  }
+}
+
+function renderMapping() {
+  const kind = $("#imp-kind").value;
+  const guess = upload.guess || {};
+  const rows = FIELDS[kind].map((field) => {
+    const required = REQUIRED[kind].indexOf(field) >= 0;
+    const current = guess[field];
+    const options = [el("option", { value:"" }, required ? "— 選択してください —" : "（使わない）")]
+      .concat(upload.headers.map((h) =>
+        el("option", { value:h, selected: current === h }, h)));
+    const select = el("select", { "data-field":field });
+    select.replaceChildren.apply(select, options);
+
+    const row = el("div", { class:"map-row" },
+      el("label", {}, FIELD_LABELS[field] + (required ? " *" : "")), select);
+
+    if (RATE_FIELDS.indexOf(field) >= 0) {
+      const rateValue = current && current.rate_of ? current.percent : "";
+      row.appendChild(el("div", { class:"rate" }, "または 売上の",
+        el("input", { type:"number", step:"0.1", min:"0", max:"100", "data-rate":field,
+          value:rateValue, placeholder:"―" }), "%"));
+    }
+    return row;
+  });
+  const grid = $("#map-grid");
+  grid.replaceChildren.apply(grid, rows);
+  $("#imp-aggregate").checked = kind === "sales";
+}
+
+function renderPreviewTable() {
+  const headers = upload.headers;
+  $("#preview-table").replaceChildren(
+    el("thead", {}, el("tr", {}, headers.map((h) => el("th", {}, h)))),
+    el("tbody", {}, upload.rows.slice(0, 8).map((row) =>
+      el("tr", {}, headers.map((h) => el("td", { title:row[h] || "" }, row[h] || ""))))));
+}
+
+function collectMapping() {
+  const mapping = {};
+  $$("#map-grid select").forEach((sel) => { if (sel.value) mapping[sel.dataset.field] = sel.value; });
+  $$("#map-grid input[data-rate]").forEach((input) => {
+    const percent = parseFloat(input.value);
+    // 率を入れた項目は列指定より優先する（手数料 10% のような使い方）
+    if (!isNaN(percent) && percent !== 0) {
+      mapping[input.dataset.rate] = { rate_of:"gross", percent:percent };
+    }
+  });
+  return mapping;
+}
+
+$("#btn-commit").addEventListener("click", () => {
+  if (!upload) return;
+  const kind = $("#imp-kind").value;
+  const channel = $("#imp-channel").value;
+  const mapping = collectMapping();
+  const missing = REQUIRED[kind].filter((f) => !mapping[f]);
+  if (missing.length) {
+    message($("#import-msg"),
+      "必須項目が未設定です: " + missing.map((f) => FIELD_LABELS[f]).join("、"), "err");
+    return;
+  }
+  const built = buildRows(upload.rows, mapping, kind, channel, $("#imp-aggregate").checked);
+  if (!built.rows.length) {
+    message($("#import-msg"), "取り込める行がありませんでした。" + built.errors.slice(0, 3).join(" / "), "err");
+    return;
+  }
+
+  const target = kind === "sales" ? "sales" : "ads";
+  let replaced = 0;
+  if ($("#imp-replace").checked) {
+    // 同じ月を入れ直すときの二重計上を防ぐ
+    const dates = built.rows.map((r) => r.date);
+    const lo = dates.reduce((a, b) => (a < b ? a : b));
+    const hi = dates.reduce((a, b) => (a > b ? a : b));
+    const before = store[target].length;
+    store[target] = store[target].filter((r) =>
+      !(r.channel === channel && r.date >= lo && r.date <= hi));
+    replaced = before - store[target].length;
+  }
+
+  const batchId = nextId();
+  built.rows.forEach((r) => { r.batch = batchId; });
+  store[target] = store[target].concat(built.rows);
+  store.batches.unshift({ id:batchId, kind:kind, channel:channel, filename:upload.file.name,
+    rows:built.rows.length, at:new Date().toISOString().slice(0, 19).replace("T", " ") });
+  if (store.channels.indexOf(channel) < 0) store.channels.push(channel);
+  selected.add(channel);
+
+  const presetName = $("#imp-preset-name").value.trim();
+  if (presetName) {
+    const existing = store.presets.find((p) => p.name === presetName);
+    if (existing) Object.assign(existing, { kind:kind, channel:channel, mapping:mapping });
+    else store.presets.push({ id:nextId(), name:presetName, kind:kind, channel:channel, mapping:mapping });
+    $("#imp-preset-name").value = "";
+    fillPresetSelect();
+  }
+
+  save();
+  message($("#import-msg"),
+    built.rows.length + " 件を取り込みました。" + (replaced ? "（既存 " + replaced + " 件を置き換え）" : ""),
+    "ok", built.errors);
+  renderChips(); fillChannelSelects();
+  applyBoundsIfEmpty();
+  refresh();
+  toast("取り込みが完了しました");
+});
+
+function applyBoundsIfEmpty() {
+  const b = dateBounds();
+  if (!$("#date-from").value && b.min) $("#date-from").value = b.min;
+  if (!$("#date-to").value && b.max) $("#date-to").value = b.max;
+}
+
+/* ============ 手入力 ============ */
+
+$("#man-kind").addEventListener("change", renderManualFields);
+
+function renderManualFields() {
+  const kind = $("#man-kind").value;
+  const inputs = FIELDS[kind].filter((f) => f !== "date").map((field) =>
+    el("div", { class:"field" },
+      el("label", { for:"man-" + field }, FIELD_LABELS[field]),
+      el("input", { id:"man-" + field, "data-manual":field,
+        type: field === "campaign" ? "text" : "number",
+        step: field === "campaign" ? null : "1",
+        placeholder: field === "campaign" ? "任意" : "0" })));
+  const host = $("#manual-fields");
+  host.replaceChildren.apply(host, inputs);
+  if (!$("#man-date").value) $("#man-date").value = isoDate(new Date());
+}
+
+$("#btn-manual-save").addEventListener("click", () => {
+  const kind = $("#man-kind").value;
+  const channel = $("#man-channel").value;
+  const date = parseDate($("#man-date").value);
+  if (!channel || !date) {
+    message($("#manual-msg"), "チャネルと日付は必須です。", "err");
+    return;
+  }
+  const values = {};
+  $$("[data-manual]").forEach((input) => { values[input.dataset.manual] = input.value; });
+
+  let row;
+  if (kind === "sales") {
+    row = { channel:channel, date:date, note:"", orders:parseInteger(values.orders) };
+    SALES_NUMERIC.forEach((f) => { row[f] = parseNumber(values[f]); });
+    store.sales.push(row);
+  } else {
+    row = { channel:channel, date:date, note:"",
+      campaign:String(values.campaign || "").slice(0, 120),
+      clicks:parseInteger(values.clicks), impressions:parseInteger(values.impressions) };
+    ADS_NUMERIC.forEach((f) => { row[f] = parseNumber(values[f]); });
+    store.ads.push(row);
+  }
+  if (store.channels.indexOf(channel) < 0) store.channels.push(channel);
+  selected.add(channel);
+  save();
+  $$("[data-manual]").forEach((input) => { input.value = ""; });
+  message($("#manual-msg"), "登録しました。", "ok");
+  renderChips(); fillChannelSelects();
+  applyBoundsIfEmpty();
+  refresh();
+  toast("登録しました");
+});
+
+/* ============ 履歴 ============ */
+
+function renderHistory() {
+  const table = $("#batch-table");
+  if (!store.batches.length) {
+    table.replaceChildren(el("tbody", {}, el("tr", {},
+      el("td", { class:"empty" }, "取り込み履歴はまだありません。"))));
+  } else {
+    table.replaceChildren(
+      el("thead", {}, el("tr", {},
+        ["取り込み日時","種類","チャネル","ファイル","件数",""].map((h) => el("th", {}, h)))),
+      el("tbody", {}, store.batches.map((b) => el("tr", {},
+        el("td", {}, b.at),
+        el("td", {}, b.kind === "sales" ? "売上" : "広告費"),
+        el("td", {}, b.channel),
+        el("td", {}, b.filename),
+        el("td", {}, num(b.rows)),
+        el("td", {}, el("button", { class:"danger", onclick: () => undoBatch(b) }, "取り消す"))))));
+  }
+
+  const presetTable = $("#preset-table");
+  if (!store.presets.length) {
+    presetTable.replaceChildren(el("tbody", {}, el("tr", {},
+      el("td", { class:"empty" }, "保存済みの列設定はありません。"))));
+    return;
+  }
+  presetTable.replaceChildren(
+    el("thead", {}, el("tr", {},
+      ["名前","種類","チャネル","対応付け",""].map((h) => el("th", {}, h)))),
+    el("tbody", {}, store.presets.map((p) => el("tr", {},
+      el("td", {}, p.name),
+      el("td", {}, p.kind === "sales" ? "売上" : "広告費"),
+      el("td", {}, p.channel),
+      el("td", { style:"text-align:left;white-space:normal" },
+        Object.keys(p.mapping).map((k) => (FIELD_LABELS[k] || k) + "←"
+          + (typeof p.mapping[k] === "object" ? "売上の" + p.mapping[k].percent + "%" : p.mapping[k])).join(" / ")),
+      el("td", {}, el("button", { class:"danger", onclick: () => {
+        if (!confirm("列設定「" + p.name + "」を削除します。よろしいですか？")) return;
+        store.presets = store.presets.filter((x) => x !== p);
+        save(); fillPresetSelect(); renderHistory();
+      } }, "削除"))))));
+}
+
+function undoBatch(batch) {
+  if (!confirm("「" + batch.filename + "」の取り込み " + batch.rows + " 件を取り消します。よろしいですか？")) return;
+  const target = batch.kind === "sales" ? "sales" : "ads";
+  store[target] = store[target].filter((r) => r.batch !== batch.id);
+  store.batches = store.batches.filter((b) => b.id !== batch.id);
+  save();
+  renderHistory(); renderChips(); refresh();
+  toast("取り込みを取り消しました");
+}
+
+/* ============ バックアップ ============ */
+
+$("#btn-backup-save").addEventListener("click", async () => {
+  const filename = "売上広告費バックアップ_" + new Date().toISOString().slice(0, 10) + ".json";
+  const result = await saveFile(filename, JSON.stringify(store, null, 1), "application/json");
+  if (!result.saved) return;
+  message($("#backup-msg"),
+    result.named
+      ? "バックアップを保存しました。大切に保管してください。"
+      : "バックアップを保存しました。" + renameNotice(filename),
+    result.named ? "ok" : "info");
+});
+
+$("#btn-backup-load").addEventListener("click", () => $("#backup-input").click());
+$("#backup-input").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!confirm("現在のデータはバックアップの内容で置き換えられます。よろしいですか？")) {
+    e.target.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      adopt(JSON.parse(reader.result));
+      save();
+      selected.clear();
+      store.channels.forEach((c) => selected.add(c));
+      renderChips(); fillChannelSelects(); fillPresetSelect(); renderStorageStatus();
+      const b = dateBounds();
+      $("#date-from").value = b.min || "";
+      $("#date-to").value = b.max || "";
+      refresh();
+      message($("#backup-msg"), "バックアップから復元しました。", "ok");
+      toast("復元しました");
+    } catch (err) {
+      message($("#backup-msg"), "このファイルは読み込めませんでした（" + err.message + "）。", "err");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+
+$("#btn-reset").addEventListener("click", () => {
+  if (!confirm("保存されているデータをすべて削除します。元に戻せません。よろしいですか？")) return;
+  if (!confirm("本当によろしいですか？ 先にバックアップの保存をおすすめします。")) return;
+  store.sales = []; store.ads = []; store.batches = []; store.presets = [];
+  store.channels = DEFAULT_CHANNELS.slice();
+  store.seq = 1;
+  selected.clear();
+  store.channels.forEach((c) => selected.add(c));
+  save();
+  renderChips(); fillChannelSelects(); fillPresetSelect(); renderHistory(); renderStorageStatus();
+  $("#date-from").value = ""; $("#date-to").value = "";
+  refresh();
+  message($("#backup-msg"), "すべて削除しました。", "ok");
+});
+
+function renderStorageStatus() {
+  const bytes = new Blob([JSON.stringify(store)]).size;
+  $("#storage-status").textContent =
+    "登録件数: 売上 " + num(store.sales.length) + " 行 / 広告費 " + num(store.ads.length)
+    + " 行 ／ データ量 約 " + Math.max(1, Math.round(bytes / 1024)).toLocaleString() + " KB ／ "
+    + (storageOK ? "ブラウザへの自動保存: 有効" : "ブラウザへの自動保存: 無効（バックアップ保存をお使いください）");
+}
+
+/* ============ 起動 ============ */
+
+load();
+if (!storageOK) {
+  showWarning("このブラウザでは自動保存が使えない設定になっています。"
+    + "作業のあとは「保存・バックアップ」タブからバックアップを保存してください。");
+}
+store.channels.forEach((c) => selected.add(c));
+renderChips();
+fillChannelSelects();
+fillPresetSelect();
+renderManualFields();
+const bounds = dateBounds();
+const now = new Date();
+$("#date-from").value = bounds.min || isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+$("#date-to").value = bounds.max || isoDate(now);
+refresh();
+</script>
+</body>
+</html>
