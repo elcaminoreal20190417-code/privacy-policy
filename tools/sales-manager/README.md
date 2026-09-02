@@ -33,6 +33,23 @@ Amazon・楽天・Yahoo!ショッピング・公式サイト・卸など、**販
 どちらの場合も、数秒でブラウザが開いて画面が表示されます。
 自動で開かないときは <http://127.0.0.1:8787/> を手で開いてください。
 
+### デスクトップにアイコンを置く
+
+毎回フォルダを開かなくて済むよう、デスクトップに起動用アイコンを作れます。
+
+- **Windows**: `create_shortcut.bat` をダブルクリック
+- **macOS**: `create_shortcut.command` をダブルクリック
+
+デスクトップに「売上・広告費 一元管理」というアイコンができます。
+次回からはそれをダブルクリックするだけで起動します。
+
+元のフォルダを移動・削除するとアイコンは動かなくなるので、移動したあとは
+もう一度このスクリプトを実行してください。アイコンを消したいときは次のとおりです。
+
+```
+python3 create_shortcut.py --remove
+```
+
 終了するときは、開いている黒い画面（コマンドプロンプト／ターミナル）で
 `Ctrl` + `C` を押すか、そのウィンドウを閉じます。
 
@@ -136,6 +153,10 @@ python3 samples/make_samples.py
 ```
 tools/sales-manager/
 ├─ start.bat / start.command   起動用（ダブルクリック）
+├─ create_shortcut.bat        デスクトップにアイコンを作る（Windows）
+├─ create_shortcut.command    デスクトップにアイコンを作る（macOS）
+├─ create_shortcut.py         上記の中身（Windows / macOS / Linux 共通）
+├─ icon.ico / icon.png        アイコン画像
 ├─ server.py                   ローカル HTTP サーバ
 ├─ db.py                       SQLite への保存・集計
 ├─ importer.py                 CSV の文字コード判定・列の対応付け・集計
