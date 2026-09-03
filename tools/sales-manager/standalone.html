@@ -112,6 +112,7 @@ transition:opacity .2s,transform .2s;pointer-events:none;z-index:50}
     <button data-tab="manual">手入力</button>
     <button data-tab="history">履歴</button>
     <button data-tab="backup">保存・バックアップ</button>
+    <button data-tab="help">使い方</button>
   </nav>
 </header>
 
@@ -284,6 +285,94 @@ transition:opacity .2s,transform .2s;pointer-events:none;z-index:50}
       （通信は一切行いません）。データはお使いのPCのブラウザ内にのみ保存され、外部には送信されません。<br>
       別のPCに移すときは、このHTMLファイルとバックアップファイルの2つをコピーしてください。
     </p>
+  </div>
+</section>
+
+<section class="view" id="view-help" hidden>
+  <div class="panel">
+    <h2>まず動きを見てみる</h2>
+    <p class="hint-text" style="margin:0 0 12px">
+      自分のCSVを用意する前に、架空のデータで画面の動きを確かめられます。
+      2か月分（Amazon・楽天・Yahoo・公式サイト・卸と広告費）が入ります。あとから1回でまとめて消せます。
+    </p>
+    <div class="row-gap">
+      <button class="primary" id="btn-demo-load">サンプルデータを入れて試す</button>
+      <button class="ghost" id="btn-demo-remove">サンプルデータを消す</button>
+    </div>
+    <div id="demo-msg"></div>
+  </div>
+
+  <div class="panel steps">
+    <h2>ふだんの使い方</h2>
+    <div class="step">
+      <h3>各モールの管理画面から売上CSVをダウンロードする</h3>
+      <p class="hint-text" style="margin:0">
+        Amazon セラーセントラル、楽天 RMS、Yahoo! ストアクリエイターProなどの「レポート」「売上」「注文」
+        メニューにあります。文字コード（Shift_JIS / UTF-8）はどちらでも構いません。
+      </p>
+    </div>
+    <div class="step">
+      <h3>「データ取り込み」タブでファイルを入れる</h3>
+      <p class="hint-text" style="margin:0">
+        種類（売上 / 広告費）とチャネルを選び、点線の枠にCSVをドラッグ＆ドロップします。
+        列の対応付けは自動で埋まります。<strong>日付</strong>と<strong>売上（広告費）</strong>の2つだけ合っていれば取り込めます。
+      </p>
+    </div>
+    <div class="step">
+      <h3>列の設定に名前を付けて保存する</h3>
+      <p class="hint-text" style="margin:0">
+        「取り込む」ボタンの左の欄に「Amazon月次」のように名前を入れておくと、翌月からはそれを選ぶだけになります。
+      </p>
+    </div>
+    <div class="step">
+      <h3>「ダッシュボード」で見る</h3>
+      <p class="hint-text" style="margin:0">
+        期間ボタン（今月・先月など）とチャネルのボタンで絞り込めます。「チャネル別CSV」でExcel用に書き出せます。
+      </p>
+    </div>
+    <div class="step">
+      <h3>月に一度、バックアップを保存する</h3>
+      <p class="hint-text" style="margin:0">
+        データはこのブラウザの中に保存されるため、閲覧履歴の削除で消えることがあります。
+        「保存・バックアップ」タブからファイルに保存しておいてください。
+      </p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>よくある質問</h2>
+    <table>
+      <tbody>
+        <tr><td style="white-space:normal;width:38%">手数料や原価の列がCSVに無い</td>
+            <td style="text-align:left;white-space:normal">列の対応付けの「または 売上の ◯ %」に率を入れます（例: 手数料 15、原価 35）。</td></tr>
+        <tr><td style="white-space:normal">同じ月を間違えて2回入れた</td>
+            <td style="text-align:left;white-space:normal">「履歴」タブで片方を「取り消す」か、再取り込み時に「既存データを置き換える」にチェックします。</td></tr>
+        <tr><td style="white-space:normal">CSVが無い販路（卸・実店舗）がある</td>
+            <td style="text-align:left;white-space:normal">「手入力」タブから月まとめで入れられます。日付はその月の1日にします。</td></tr>
+        <tr><td style="white-space:normal">1行目が列名でないCSV（楽天RMSなど）</td>
+            <td style="text-align:left;white-space:normal">取り込み画面の「見出しの行番号」を実際の行に変更します。</td></tr>
+        <tr><td style="white-space:normal">別のPCでも使いたい</td>
+            <td style="text-align:left;white-space:normal">このHTMLファイルとバックアップファイルの2つをコピーし、新しいPCで「バックアップから復元」します。</td></tr>
+        <tr><td style="white-space:normal">データはどこかに送られる？</td>
+            <td style="text-align:left;white-space:normal">送られません。通信は一切行わず、お使いのPCのブラウザ内にだけ保存されます。</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h2>指標の計算式</h2>
+    <table>
+      <tbody>
+        <tr><td>純売上</td><td style="text-align:left">売上 − 返金</td></tr>
+        <tr><td>粗利</td><td style="text-align:left">純売上 − 手数料 − 送料 − 原価 − 広告費</td></tr>
+        <tr><td>粗利率</td><td style="text-align:left">粗利 ÷ 純売上</td></tr>
+        <tr><td>広告費率</td><td style="text-align:left">広告費 ÷ 純売上</td></tr>
+        <tr><td>ACoS</td><td style="text-align:left">広告費 ÷ 広告経由売上</td></tr>
+        <tr><td>ROAS</td><td style="text-align:left">広告経由売上 ÷ 広告費</td></tr>
+        <tr><td>客単価</td><td style="text-align:left">純売上 ÷ 注文数</td></tr>
+      </tbody>
+    </table>
+    <p class="hint-text">入力していない費目は 0 として計算されます。原価を入れていなければ、粗利は原価を引く前の値になります。</p>
   </div>
 </section>
 
@@ -1408,6 +1497,132 @@ function renderStorageStatus() {
     + " 行 ／ データ量 約 " + Math.max(1, Math.round(bytes / 1024)).toLocaleString() + " KB ／ "
     + (storageOK ? "ブラウザへの自動保存: 有効" : "ブラウザへの自動保存: 無効（バックアップ保存をお使いください）");
 }
+
+/* ============ サンプルデータ ============ */
+
+// 毎回同じ内容になるよう、乱数の種を固定した簡易生成器
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return function () {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+function demoBatchIds() {
+  return store.batches.filter((b) => b.demo).map((b) => b.id);
+}
+
+function loadDemoData() {
+  if (demoBatchIds().length) {
+    message($("#demo-msg"), "サンプルデータはすでに入っています。", "info");
+    return;
+  }
+  const rand = seededRandom(20260501);
+  const between = (lo, hi) => lo + Math.floor(rand() * (hi - lo + 1));
+  const months = [["2026-04", 30], ["2026-05", 31]];
+  const stamp = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+  function addBatch(kind, channel, rows) {
+    const id = nextId();
+    rows.forEach((r) => { r.batch = id; });
+    store[kind === "sales" ? "sales" : "ads"] =
+      store[kind === "sales" ? "sales" : "ads"].concat(rows);
+    store.batches.unshift({ id: id, kind: kind, channel: channel, filename: "サンプルデータ",
+      rows: rows.length, at: stamp, demo: true });
+  }
+
+  // 日次のモール売上（原価は 35%、手数料は各モールらしい率）
+  const daily = [
+    ["Amazon", 20000, 90000, 0.15, 0, [3, 9]],
+    ["楽天", 30000, 110000, 0.10, 550, [4, 12]],
+    ["公式サイト", 0, 45000, 0.036, 0, [0, 4]],
+  ];
+  daily.forEach(([channel, lo, hi, feeRate, ship, orders]) => {
+    const rows = [];
+    months.forEach(([ym, days]) => {
+      for (let d = 1; d <= days; d++) {
+        const gross = between(lo, hi);
+        rows.push({ channel: channel, date: ym + "-" + pad(d), note: "",
+          orders: gross ? between(orders[0], orders[1]) : 0, gross: gross,
+          fees: Math.round(gross * feeRate), shipping: gross ? ship : 0,
+          cogs: Math.round(gross * 0.35), refunds: rand() < 0.08 ? between(2000, 9000) : 0 });
+      }
+    });
+    addBatch("sales", channel, rows);
+  });
+
+  // Yahoo は月まとめ 1 行、卸は月に 2 本の請求
+  addBatch("sales", "Yahoo", months.map(([ym]) => {
+    const gross = between(280000, 340000);
+    return { channel: "Yahoo", date: ym + "-01", note: "", orders: between(40, 55), gross: gross,
+      fees: Math.round(gross * 0.09), shipping: 12000, cogs: Math.round(gross * 0.35), refunds: 0 };
+  }));
+  const wholesale = [];
+  months.forEach(([ym]) => {
+    [9, 21].forEach((d) => {
+      const gross = between(200000, 500000);
+      wholesale.push({ channel: "卸", date: ym + "-" + pad(d), note: "", orders: 1, gross: gross,
+        fees: 0, shipping: 0, cogs: Math.round(gross * 0.65), refunds: 0 });
+    });
+  });
+  addBatch("sales", "卸", wholesale);
+
+  // 広告費（Amazon はキャンペーン 2 本、楽天は RPP）
+  const amazonAds = [];
+  months.forEach(([ym, days]) => {
+    for (let d = 1; d <= days; d++) {
+      ["スポンサープロダクト", "スポンサーブランド"].forEach((campaign) => {
+        const cost = between(800, 4200);
+        amazonAds.push({ channel: "Amazon", date: ym + "-" + pad(d), note: "", campaign: campaign,
+          cost: cost, ad_sales: Math.round(cost * (2.5 + rand() * 5)),
+          clicks: between(40, 260), impressions: between(2000, 18000) });
+      });
+    }
+  });
+  addBatch("ads", "Amazon", amazonAds);
+  const rakutenAds = [];
+  months.forEach(([ym, days]) => {
+    for (let d = 1; d <= days; d++) {
+      const cost = between(1500, 6000);
+      rakutenAds.push({ channel: "楽天", date: ym + "-" + pad(d), note: "", campaign: "RPP",
+        cost: cost, ad_sales: Math.round(cost * (4 + rand() * 4)),
+        clicks: between(30, 180), impressions: 0 });
+    }
+  });
+  addBatch("ads", "楽天", rakutenAds);
+
+  store.channels.forEach((c) => selected.add(c));
+  save();
+  renderChips(); fillChannelSelects();
+  const b = dateBounds();
+  $("#date-from").value = b.min; $("#date-to").value = b.max;
+  refresh();
+  message($("#demo-msg"),
+    "サンプルデータを入れました。「ダッシュボード」タブで見てみてください。不要になったら「サンプルデータを消す」で戻せます。", "ok");
+  toast("サンプルデータを入れました");
+}
+
+function removeDemoData() {
+  const ids = new Set(demoBatchIds());
+  if (!ids.size) {
+    message($("#demo-msg"), "サンプルデータは入っていません。", "info");
+    return;
+  }
+  store.sales = store.sales.filter((r) => !ids.has(r.batch));
+  store.ads = store.ads.filter((r) => !ids.has(r.batch));
+  store.batches = store.batches.filter((b) => !ids.has(b.id));
+  save();
+  renderChips();
+  const b = dateBounds();
+  $("#date-from").value = b.min || ""; $("#date-to").value = b.max || "";
+  refresh();
+  message($("#demo-msg"), "サンプルデータを消しました。ご自身で取り込んだデータはそのまま残っています。", "ok");
+  toast("サンプルデータを消しました");
+}
+
+$("#btn-demo-load").addEventListener("click", loadDemoData);
+$("#btn-demo-remove").addEventListener("click", removeDemoData);
 
 /* ============ 起動 ============ */
 
